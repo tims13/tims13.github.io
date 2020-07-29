@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 4.2.1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"tims13.github.io","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="ABOUT参考： Boost智能指针——weak_ptr C++11中智能指针的原理、使用、实现 参考以上资料，总结一下C++11中的智能指针，加上自己的一些理解，方便查阅。 C++11引入智能指针的概念，是为了更好管理堆内存，减少内存泄漏的发生。一些需要注意的地方：  智能指针核心是运用了RAII（资源获取即初始化），对一个普通指针进行封装。 智能指针是一个类的对象，但是因为重构了操作符”-&amp;g">
+<meta property="og:type" content="article">
+<meta property="og:title" content="C++11:智能指针总结">
+<meta property="og:url" content="https://tims13.github.io/2020/07/29/C-11-%E6%99%BA%E8%83%BD%E6%8C%87%E9%92%88%E6%80%BB%E7%BB%93/index.html">
+<meta property="og:site_name" content="Life in Technicolor">
+<meta property="og:description" content="ABOUT参考： Boost智能指针——weak_ptr C++11中智能指针的原理、使用、实现 参考以上资料，总结一下C++11中的智能指针，加上自己的一些理解，方便查阅。 C++11引入智能指针的概念，是为了更好管理堆内存，减少内存泄漏的发生。一些需要注意的地方：  智能指针核心是运用了RAII（资源获取即初始化），对一个普通指针进行封装。 智能指针是一个类的对象，但是因为重构了操作符”-&amp;g">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2020-07-29T09:02:01.000Z">
+<meta property="article:modified_time" content="2020-07-29T11:51:50.546Z">
+<meta property="article:author" content="tims13">
+<meta property="article:tag" content="C++">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="https://tims13.github.io/2020/07/29/C-11-%E6%99%BA%E8%83%BD%E6%8C%87%E9%92%88%E6%80%BB%E7%BB%93/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>C++11:智能指针总结 | Life in Technicolor</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Life in Technicolor</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://tims13.github.io/2020/07/29/C-11-%E6%99%BA%E8%83%BD%E6%8C%87%E9%92%88%E6%80%BB%E7%BB%93/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/a1.jpg">
+      <meta itemprop="name" content="tims13">
+      <meta itemprop="description" content="tims blog">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Life in Technicolor">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          C++11:智能指针总结
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2020-07-29 17:02:01 / 修改时间：19:51:50" itemprop="dateCreated datePublished" datetime="2020-07-29T17:02:01+08:00">2020-07-29</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/C/" itemprop="url" rel="index"><span itemprop="name">C++</span></a>
+                </span>
+            </span>
+
+          
+            <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv" style="display: none;">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span id="busuanzi_value_page_pv"></span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h3 id="ABOUT"><a href="#ABOUT" class="headerlink" title="ABOUT"></a>ABOUT</h3><p>参考：</p>
+<p><a href="https://www.cnblogs.com/TianFang/archive/2008/09/20/1294590.html" target="_blank" rel="noopener">Boost智能指针——weak_ptr</a></p>
+<p><a href="https://www.cnblogs.com/wxquare/p/4759020.html" target="_blank" rel="noopener">C++11中智能指针的原理、使用、实现</a></p>
+<p>参考以上资料，总结一下C++11中的智能指针，加上自己的一些理解，方便查阅。</p>
+<p>C++11引入智能指针的概念，是为了更好管理堆内存，减少内存泄漏的发生。一些需要注意的地方：</p>
+<ol>
+<li>智能指针核心是运用了RAII（资源获取即初始化），对一个普通指针进行封装。</li>
+<li>智能指针是一个类的对象，但是因为重构了操作符”-&gt;”与”*”，所以能够像一个指针那样用。</li>
+</ol>
+<h3 id="shared-ptr"><a href="#shared-ptr" class="headerlink" title="shared_ptr"></a>shared_ptr</h3><p>shared_ptr使用了引用计数，多个指针指向一个对象的时候，shared_ptr通过管理引用计数，来达到管理内存的目的。</p>
+<ol>
+<li>内部是线程安全的，但是对象的读取要加锁。</li>
+<li>初始化的方式：传入指针到构造函数：<code>shared_ptr&lt;Node&gt; sp(new Node());</code>或者通过make_shared：<code>shared_ptr&lt;Node&gt; sp = make_shared&lt;Node&gt; (node);</code>。</li>
+<li>利用原指针初始化最多一个shared_ptr，如果有多个，可能会导致多次释放同一段内存。</li>
+<li>拷贝使被拷贝的对象的引用计数增加；赋值使原对象的引用计数减少（原对象被覆盖了）。</li>
+</ol>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;iostream&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;memory&gt;</span></span></span><br><span class="line"><span class="keyword">using</span> <span class="keyword">namespace</span> <span class="built_in">std</span>;</span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">int</span> a = <span class="number">10</span>;</span><br><span class="line">        <span class="built_in">shared_ptr</span>&lt;<span class="keyword">int</span>&gt; sp_a0 = make_shared&lt;<span class="keyword">int</span>&gt;(a);</span><br><span class="line"></span><br><span class="line">        <span class="comment">/* 不能重复使用同一对象进行初始化多次 */</span> </span><br><span class="line">        <span class="comment">// shared_ptr&lt;int&gt; sp_a1 = make_shared&lt;int&gt;(a);</span></span><br><span class="line"></span><br><span class="line">        <span class="comment">/* 正确用法：copy */</span> </span><br><span class="line">        <span class="function"><span class="built_in">shared_ptr</span>&lt;<span class="keyword">int</span>&gt; <span class="title">sp_a1</span><span class="params">(sp_a0)</span></span>;</span><br><span class="line">        </span><br><span class="line">        <span class="comment">/* 2 2 */</span></span><br><span class="line">        <span class="built_in">cout</span>&lt;&lt; sp_a0.use_count()&lt;&lt; <span class="string">" "</span>&lt;&lt; sp_a1.use_count()&lt;&lt; <span class="built_in">endl</span>;</span><br><span class="line">		</span><br><span class="line">		<span class="comment">/* 第二种初始化方式 */</span> </span><br><span class="line">		<span class="keyword">int</span>* b = <span class="keyword">new</span> <span class="keyword">int</span>;</span><br><span class="line">		<span class="function"><span class="built_in">shared_ptr</span>&lt;<span class="keyword">int</span>&gt; <span class="title">sp_b</span><span class="params">(b)</span></span>;</span><br><span class="line">		<span class="comment">/* sp_a1被sp_b覆盖，引用将减少1 */</span> </span><br><span class="line">		sp_a1 = sp_b;</span><br><span class="line">		<span class="comment">/* 1 2 */</span></span><br><span class="line">		<span class="built_in">cout</span>&lt;&lt; sp_a0.use_count()&lt;&lt; <span class="string">" "</span>&lt;&lt; sp_a1.use_count()&lt;&lt; <span class="built_in">endl</span>;</span><br><span class="line">		</span><br><span class="line">		<span class="comment">/* 获取原指针 */</span> </span><br><span class="line">		<span class="keyword">int</span>* pb = sp_b.<span class="built_in">get</span>();</span><br><span class="line">		<span class="comment">/* 0xb71530 0xb71530 */</span></span><br><span class="line">		<span class="built_in">cout</span> &lt;&lt; pb &lt;&lt; <span class="string">" "</span>&lt;&lt; b&lt;&lt; <span class="built_in">endl</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<h3 id="unique-ptr"><a href="#unique-ptr" class="headerlink" title="unique_ptr"></a>unique_ptr</h3><p>顾名思义，unique_ptr唯一地指向其对象，同一时刻只能有一个unique_ptr指向一个对象。</p>
+<ol>
+<li>作用域内，禁止赋值、禁止拷贝，只能转移。</li>
+<li>利用RAII，异常的时候，动态资源能够利用析构函数进行释放。</li>
+<li>如果离开作用域，unique_ptr将delete掉其指向的对象。</li>
+</ol>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;iostream&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;memory&gt;</span></span></span><br><span class="line"><span class="keyword">using</span> <span class="keyword">namespace</span> <span class="built_in">std</span>;</span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">	<span class="keyword">int</span>* p0; </span><br><span class="line">    &#123;</span><br><span class="line">    	<span class="keyword">int</span>* p = <span class="keyword">new</span> <span class="keyword">int</span>(<span class="number">10</span>);</span><br><span class="line">    	p0 = p;</span><br><span class="line">        <span class="function"><span class="built_in">unique_ptr</span>&lt;<span class="keyword">int</span>&gt; <span class="title">up0</span><span class="params">(p)</span></span>;</span><br><span class="line">        <span class="comment">/* 转移 */</span> </span><br><span class="line">    	<span class="built_in">unique_ptr</span>&lt;<span class="keyword">int</span>&gt; up1 = <span class="built_in">move</span>(up0);</span><br><span class="line">    	<span class="comment">//up1.release();</span></span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">// up1没有release，超出作用域外将delete对应的内存，因此输出并非10</span></span><br><span class="line">    <span class="comment">// up1如果进行了release，内存不会delete，输出为10 </span></span><br><span class="line">    <span class="built_in">cout</span>&lt;&lt; *p0&lt;&lt; <span class="built_in">endl</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<h3 id="weak-ptr"><a href="#weak-ptr" class="headerlink" title="weak_ptr"></a>weak_ptr</h3><p>weak_ptr为弱指针，因为其主要是为了配合shared_ptr来使用。</p>
+<ol>
+<li>其没有重载”-&gt;”和”*”，所以其不具有普通指针的行为。</li>
+<li>其可以从一个weak_ptr和shared_ptr来构造。</li>
+<li>其没有共享资源的概念，作用是观测资源的使用情况。</li>
+</ol>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;iostream&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;memory&gt;</span></span></span><br><span class="line"><span class="keyword">using</span> <span class="keyword">namespace</span> <span class="built_in">std</span>;</span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    &#123;</span><br><span class="line">    	<span class="keyword">int</span>* p = <span class="keyword">new</span> <span class="keyword">int</span>(<span class="number">10</span>);</span><br><span class="line">    	<span class="function"><span class="built_in">shared_ptr</span>&lt;<span class="keyword">int</span>&gt; <span class="title">sp</span><span class="params">(p)</span></span>;</span><br><span class="line">    	<span class="function">weak_ptr&lt;<span class="keyword">int</span>&gt; <span class="title">wp</span><span class="params">(sp)</span></span>;</span><br><span class="line">    	</span><br><span class="line">    	<span class="comment">/* 1 */</span></span><br><span class="line">    	<span class="built_in">cout</span>&lt;&lt; wp.use_count()&lt;&lt; <span class="built_in">endl</span>;</span><br><span class="line">    	</span><br><span class="line">    	<span class="comment">/* 10 */</span></span><br><span class="line">    	<span class="built_in">cout</span>&lt;&lt; *sp&lt;&lt; <span class="built_in">endl</span>;</span><br><span class="line">    	</span><br><span class="line">    	<span class="comment">/* 如果其引用指针所指的内存存在 */</span> </span><br><span class="line">    	<span class="keyword">if</span> (!wp.expired()) &#123;</span><br><span class="line">    		<span class="comment">/* 获取一个指向同样内存的shared_ptr */</span> </span><br><span class="line">    		<span class="built_in">shared_ptr</span>&lt;<span class="keyword">int</span>&gt; sp_new = wp.lock();</span><br><span class="line">    		*sp_new = <span class="number">99</span>;</span><br><span class="line">		&#125;</span><br><span class="line">		<span class="comment">/* 99 */</span></span><br><span class="line">    	<span class="built_in">cout</span>&lt;&lt; *sp&lt;&lt; <span class="built_in">endl</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="循环引用"><a href="#循环引用" class="headerlink" title="循环引用"></a>循环引用</h4><p>如果一个资源被循环引用，则会因为计数无法减少而导致资源无法释放（类似死锁），最终导致内存泄漏。</p>
+<p>利用weak_ptr，可以很好地解决循环引用的问题，因为weak_ptr是不管理其指向内存的。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;string&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;iostream&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;memory&gt;</span></span></span><br><span class="line"><span class="keyword">using</span> <span class="keyword">namespace</span> <span class="built_in">std</span>;</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">parent</span>;</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">children</span>;</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">typedef</span> <span class="built_in">shared_ptr</span>&lt;parent&gt; parent_ptr;</span><br><span class="line"><span class="keyword">typedef</span> <span class="built_in">shared_ptr</span>&lt;children&gt; children_ptr;</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">parent</span></span></span><br><span class="line"><span class="class">&#123;</span></span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    ~parent() &#123; <span class="built_in">std</span>::<span class="built_in">cout</span> &lt;&lt;<span class="string">"destroying parent\n"</span>; &#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    children_ptr children;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">children</span></span></span><br><span class="line"><span class="class">&#123;</span></span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    ~children() &#123; <span class="built_in">std</span>::<span class="built_in">cout</span> &lt;&lt;<span class="string">"destroying children\n"</span>; &#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="comment">/* 使用shared_ptr，不能够调用析构函数，将会导致内存泄漏 */</span></span><br><span class="line">    <span class="comment">//parent_ptr parent;</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">/* 使用weak_ptr，能够调用析构函数并打印 */</span></span><br><span class="line">    weak_ptr&lt;parent&gt; parent;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">test</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="function">parent_ptr <span class="title">father</span><span class="params">(<span class="keyword">new</span> parent())</span></span>;</span><br><span class="line">    <span class="function">children_ptr <span class="title">son</span><span class="params">(<span class="keyword">new</span> children)</span></span>;</span><br><span class="line"></span><br><span class="line">    father-&gt;children = son;</span><br><span class="line">    son-&gt;parent = father;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="built_in">std</span>::<span class="built_in">cout</span>&lt;&lt;<span class="string">"begin test...\n"</span>;</span><br><span class="line">    test();</span><br><span class="line">    <span class="built_in">std</span>::<span class="built_in">cout</span>&lt;&lt;<span class="string">"end test.\n"</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<h3 id="智能指针设计实现"><a href="#智能指针设计实现" class="headerlink" title="智能指针设计实现"></a>智能指针设计实现</h3><figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;iostream&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;memory&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;assert.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="keyword">using</span> <span class="keyword">namespace</span> <span class="built_in">std</span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">typename</span> T&gt;</span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">SmartPointer</span> &#123;</span></span><br><span class="line">	<span class="keyword">private</span>:</span><br><span class="line">		T* _p;</span><br><span class="line">		<span class="keyword">size_t</span>* _count;</span><br><span class="line">	<span class="keyword">public</span>:</span><br><span class="line">		SmartPointer(T* p = <span class="literal">nullptr</span>) : _p(p) &#123;</span><br><span class="line">			<span class="keyword">if</span> (_p) &#123;</span><br><span class="line">				_count = <span class="keyword">new</span> <span class="keyword">size_t</span>(<span class="number">1</span>);</span><br><span class="line">			&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">				_count = <span class="keyword">new</span> <span class="keyword">size_t</span>(<span class="number">0</span>);</span><br><span class="line">			&#125;</span><br><span class="line">		&#125;</span><br><span class="line">		</span><br><span class="line">		SmartPointer(<span class="keyword">const</span> SmartPointer&amp; sp) &#123;</span><br><span class="line">			<span class="keyword">if</span> (<span class="keyword">this</span> != &amp;sp) &#123;</span><br><span class="line">				_p = sp._p;</span><br><span class="line">				_count = sp._count;</span><br><span class="line">				++(*_count);</span><br><span class="line">			&#125;</span><br><span class="line">		&#125;</span><br><span class="line">		</span><br><span class="line">		~SmartPointer() &#123;</span><br><span class="line">			--(*_count);</span><br><span class="line">			<span class="keyword">if</span> ((*_count) == <span class="number">0</span>) &#123;</span><br><span class="line">				<span class="keyword">delete</span> _p;</span><br><span class="line">				<span class="keyword">delete</span> _count;</span><br><span class="line">			&#125; </span><br><span class="line">		&#125;</span><br><span class="line">		</span><br><span class="line">		SmartPointer&amp; <span class="keyword">operator</span>=(<span class="keyword">const</span> SmartPointer&amp; sp) &#123;</span><br><span class="line">			<span class="keyword">if</span> (<span class="keyword">this</span> == &amp;sp) <span class="keyword">return</span> *<span class="keyword">this</span>;</span><br><span class="line">			<span class="keyword">if</span> (_p) &#123;</span><br><span class="line">				--(*_count);</span><br><span class="line">				<span class="keyword">if</span> (*_count == <span class="number">0</span>) &#123;</span><br><span class="line">					<span class="keyword">delete</span> _p;</span><br><span class="line">					<span class="keyword">delete</span> _count;</span><br><span class="line">				&#125;</span><br><span class="line">			&#125;</span><br><span class="line">			_p = sp._p;</span><br><span class="line">			_count = sp._count;</span><br><span class="line">			++(*_count);</span><br><span class="line">			<span class="keyword">return</span> *<span class="keyword">this</span>;</span><br><span class="line">		&#125;</span><br><span class="line">		</span><br><span class="line">		T&amp; <span class="keyword">operator</span>*() &#123;</span><br><span class="line">			assert(_p != <span class="literal">nullptr</span>);</span><br><span class="line">			<span class="keyword">return</span> *_p;</span><br><span class="line">		&#125;</span><br><span class="line">		</span><br><span class="line">		T* <span class="keyword">operator</span>-&gt;() &#123;</span><br><span class="line">			assert(_p != <span class="literal">nullptr</span>);</span><br><span class="line">			<span class="keyword">return</span> _p;</span><br><span class="line">		&#125;</span><br><span class="line">		</span><br><span class="line">		<span class="function"><span class="keyword">size_t</span> <span class="title">use_count</span><span class="params">()</span> </span>&#123;</span><br><span class="line">			<span class="keyword">return</span> *_count;</span><br><span class="line">		&#125;</span><br><span class="line">		</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">typedef</span> <span class="class"><span class="keyword">struct</span> <span class="title">Node</span> &#123;</span></span><br><span class="line">	<span class="keyword">int</span> a;</span><br><span class="line">	<span class="keyword">int</span> b;</span><br><span class="line">	Node(<span class="keyword">int</span> _a, <span class="keyword">int</span> _b) &#123;</span><br><span class="line">		a = _a;</span><br><span class="line">		b = _b;</span><br><span class="line">	&#125;</span><br><span class="line">&#125;Node;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="function">SmartPointer&lt;Node&gt; <span class="title">sp</span><span class="params">(<span class="keyword">new</span> Node(<span class="number">10</span>, <span class="number">20</span>))</span></span>;</span><br><span class="line">        <span class="function">SmartPointer&lt;Node&gt; <span class="title">sp2</span><span class="params">(sp)</span></span>;</span><br><span class="line">        <span class="function">SmartPointer&lt;Node&gt; <span class="title">sp3</span><span class="params">(<span class="keyword">new</span> Node(<span class="number">30</span>, <span class="number">40</span>))</span></span>;</span><br><span class="line">        sp2 = sp3;</span><br><span class="line">        <span class="comment">/* 1 */</span> </span><br><span class="line">        <span class="built_in">cout</span> &lt;&lt; sp.use_count() &lt;&lt; <span class="built_in">std</span>::<span class="built_in">endl</span>;</span><br><span class="line">        <span class="comment">/* 2 */</span></span><br><span class="line">        <span class="built_in">cout</span> &lt;&lt; sp3.use_count() &lt;&lt; <span class="built_in">std</span>::<span class="built_in">endl</span>;</span><br><span class="line"></span><br><span class="line">		<span class="comment">/* 10 20 */</span></span><br><span class="line">		<span class="built_in">cout</span> &lt;&lt; sp-&gt;a&lt;&lt; <span class="string">" "</span>&lt;&lt; sp-&gt;b&lt;&lt; <span class="built_in">endl</span>;</span><br><span class="line">		<span class="comment">/* 30 40 */</span></span><br><span class="line">		<span class="built_in">cout</span> &lt;&lt; sp2-&gt;a&lt;&lt; <span class="string">" "</span>&lt;&lt; sp2-&gt;b&lt;&lt; <span class="built_in">endl</span>;</span><br><span class="line">		<span class="comment">/* 30 40 */</span></span><br><span class="line">		<span class="built_in">cout</span> &lt;&lt; sp3-&gt;a&lt;&lt; <span class="string">" "</span>&lt;&lt; sp3-&gt;b&lt;&lt; <span class="built_in">endl</span>;</span><br><span class="line">		<span class="comment">/* 10 20 */</span></span><br><span class="line">		<span class="built_in">cout</span>&lt;&lt; (*sp).a &lt;&lt; <span class="string">" "</span>&lt;&lt; (*sp).b&lt;&lt; <span class="built_in">endl</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">//delete operator</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/C/" rel="tag"># C++</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2020/07/23/unix%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B-I-O%E6%A8%A1%E5%9E%8B%E4%B8%8E%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F%E3%80%81%E5%B9%B6%E5%8F%91%E6%A8%A1%E5%9E%8B/" rel="prev" title="unix网络编程:I/O模型与事件处理模式、并发模型">
+      <i class="fa fa-chevron-left"></i> unix网络编程:I/O模型与事件处理模式、并发模型
+    </a></div>
+      <div class="post-nav-item"></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#ABOUT"><span class="nav-number">1.</span> <span class="nav-text">ABOUT</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#shared-ptr"><span class="nav-number">2.</span> <span class="nav-text">shared_ptr</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#unique-ptr"><span class="nav-number">3.</span> <span class="nav-text">unique_ptr</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#weak-ptr"><span class="nav-number">4.</span> <span class="nav-text">weak_ptr</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#循环引用"><span class="nav-number">4.1.</span> <span class="nav-text">循环引用</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#智能指针设计实现"><span class="nav-number">5.</span> <span class="nav-text">智能指针设计实现</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="tims13"
+      src="/images/a1.jpg">
+  <p class="site-author-name" itemprop="name">tims13</p>
+  <div class="site-description" itemprop="description">tims blog</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">10</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">6</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">12</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/tims13" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;tims13" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/ts13go@163.com" title="E-Mail → ts13go@163.com"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">tims13</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    <span class="post-meta-item" id="busuanzi_container_site_uv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>
