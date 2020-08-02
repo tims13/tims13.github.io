@@ -162,6 +162,93 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://tims13.github.io/2020/08/01/linux%E4%B8%8B%E7%9A%84%E7%BA%BF%E7%A8%8B%E6%B1%A0%E6%80%BB%E7%BB%93%E4%B8%8E%E5%AE%9E%E7%8E%B0/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/a1.jpg">
+      <meta itemprop="name" content="tims13">
+      <meta itemprop="description" content="tims blog">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Life in Technicolor">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2020/08/01/linux%E4%B8%8B%E7%9A%84%E7%BA%BF%E7%A8%8B%E6%B1%A0%E6%80%BB%E7%BB%93%E4%B8%8E%E5%AE%9E%E7%8E%B0/" class="post-title-link" itemprop="url">linux下的线程池总结与实现</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2020-08-01 12:40:19" itemprop="dateCreated datePublished" datetime="2020-08-01T12:40:19+08:00">2020-08-01</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2020-08-02 18:09:36" itemprop="dateModified" datetime="2020-08-02T18:09:36+08:00">2020-08-02</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/linux/" itemprop="url" rel="index"><span itemprop="name">linux</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h3 id="ABOUT"><a href="#ABOUT" class="headerlink" title="ABOUT"></a>ABOUT</h3><p>总结一下linux下的线程池的一些内容，供自己记录与学习。</p>
+<p>主要参考：游双的《Linux高性能服务器编程》</p>
+<p>代码存放在：我的<a href="https://github.com/tims13/interview_2020" target="_blank" rel="noopener">GITHUB</a></p>
+<h3 id="线程池"><a href="#线程池" class="headerlink" title="线程池"></a>线程池</h3><p>总结采用问答形式进行，这样会更加直接。</p>
+<p><strong>什么是线程池？</strong></p>
+<p>把一组已经经过初始化过的线程，放在一个池子里面，进行统一管理。</p>
+<p><strong>为什么需要线程池？（作用）</strong></p>
+<p>线程的初始化和销毁，需要消耗一定的CPU资源，如果处理一个任务进行的CPU时间相对初始化和销毁的时间较低，那么资源将大大耗费在初始化和销毁上面，效率不高。如果我们准备好一个线程池，需要用的时候直接从池中取出，使用完再放回池中去，这样就能够避免繁琐的初始化和销毁。</p>
+<p><strong>线程池所用的并发模式？</strong></p>
+<p>参考我的另一篇文章：<a href="https://tims13.github.io/2020/07/23/unix%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B-I-O%E6%A8%A1%E5%9E%8B%E4%B8%8E%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F%E3%80%81%E5%B9%B6%E5%8F%91%E6%A8%A1%E5%9E%8B/">unix网络编程:I/O模型与事件处理模式、并发模型</a></p>
+<p>半同步/半反应堆：主线程异步，把request放入请求队列，然后工作线程是同步的，对request进行处理。</p>
+<p><strong>线程用到的同步机制？</strong></p>
+<p><a href="https://tims13.github.io/2020/07/22/apue-Linux%E4%B8%8B%E7%9A%84%E7%BA%BF%E7%A8%8B%E5%90%8C%E6%AD%A5/">apue:Linux下的线程同步</a></p>
+<h3 id="CODE"><a href="#CODE" class="headerlink" title="CODE"></a>CODE</h3><p><a href="https://github.com/tims13/interview_2020/blob/master/thread_pool_simple/main.cpp" target="_blank" rel="noopener">MY GITHUB</a></p>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
     <link itemprop="mainEntityOfPage" href="https://tims13.github.io/2020/07/29/C-11-%E6%99%BA%E8%83%BD%E6%8C%87%E9%92%88%E6%80%BB%E7%BB%93/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -1122,81 +1209,11 @@
   
   
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://tims13.github.io/2020/07/07/My-First-Post/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/a1.jpg">
-      <meta itemprop="name" content="tims13">
-      <meta itemprop="description" content="tims blog">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Life in Technicolor">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2020/07/07/My-First-Post/" class="post-title-link" itemprop="url">My First Post</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-
-              <time title="创建时间：2020-07-07 18:00:13" itemprop="dateCreated datePublished" datetime="2020-07-07T18:00:13+08:00">2020-07-07</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2020-07-09 00:11:47" itemprop="dateModified" datetime="2020-07-09T00:11:47+08:00">2020-07-09</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/%E6%B5%8B%E8%AF%95/" itemprop="url" rel="index"><span itemprop="name">测试</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
 
   
+  <nav class="pagination">
+    <span class="page-number current">1</span><a class="page-number" href="/page/2/">2</a><a class="extend next" rel="next" href="/page/2/"><i class="fa fa-angle-right" aria-label="下一页"></i></a>
+  </nav>
 
 
 
@@ -1263,7 +1280,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">10</span>
+          <span class="site-state-item-count">11</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
